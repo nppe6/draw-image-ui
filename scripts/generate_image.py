@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Iterable
 
 DEFAULT_MODEL = os.getenv("DRAW_MODEL", "openai/gpt-image-2")
-DEFAULT_PROVIDER = os.getenv("DRAW_PROVIDER", "zenmux")
+DEFAULT_PROVIDER = os.getenv("DRAW_PROVIDER", "codex")
 DEFAULT_BASE_URL = os.getenv("ZENMUX_VERTEX_BASE_URL", "https://zenmux.ai/api/vertex-ai")
 DEFAULT_OUTPUT_ROOT = Path.home() / ".local" / "share" / "draw" / "outputs"
 DEFAULT_MIME = "image/png"
@@ -124,7 +124,7 @@ ASPECT_RATIOS = {
 
 CODEX_SIZE_PRESETS = {
     "ultrawide": "1536x640",
-    "wide": "1536x864",
+    "wide": "1152x640",
     "classic": "1024x768",
     "square": "1024x1024",
     "portrait": "768x1024",
@@ -244,15 +244,11 @@ def render_response(*, response, output_path: Path) -> tuple[str, str]:
 
 
 def resolve_codex_api_key() -> str:
-    return resolve_project_env("OPENAI_IMAGE_API_KEY", "OPENAI_API_KEY")
+    return resolve_project_env("OPENAI_IMAGE_API_KEY")
 
 
 def resolve_codex_base_url() -> str:
-    base_url = (resolve_project_env("OPENAI_IMAGE_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
-    parsed = urllib.parse.urlparse(base_url)
-    if parsed.scheme and parsed.netloc and parsed.path in ("", "/"):
-        return f"{base_url}/v1"
-    return base_url
+    return resolve_project_env("OPENAI_IMAGE_BASE_URL").rstrip("/")
 
 
 def resolve_codex_model(override: str = "") -> str:
@@ -260,7 +256,7 @@ def resolve_codex_model(override: str = "") -> str:
 
 
 def resolve_codex_api_style(override: str = "") -> str:
-    style = override.strip() or resolve_project_env("OPENAI_IMAGE_API_STYLE") or "responses"
+    style = override.strip() or resolve_project_env("OPENAI_IMAGE_API_STYLE") or "images"
     if style not in CODEX_API_STYLES:
         raise ValueError(f"Invalid OpenAI image API style '{style}'; expected responses or images.")
     return style
@@ -389,15 +385,17 @@ def request_codex_image(
     image_type: str,
     model: str,
     output_path: Path,
-    api_style: str = "responses",
+    api_style: str = "images",
     size: str = "",
     quality: str = "high",
 ) -> Path:
     api_key = resolve_codex_api_key()
     if not api_key:
-        raise RuntimeError("No OPENAI_IMAGE_API_KEY or OPENAI_API_KEY found.")
+        raise RuntimeError("No OPENAI_IMAGE_API_KEY found.")
 
     base_url = resolve_codex_base_url()
+    if not base_url:
+        raise RuntimeError("No OPENAI_IMAGE_BASE_URL found.")
     resolved_style = resolve_codex_api_style(api_style)
     resolved_size = size.strip() or CODEX_SIZE_PRESETS.get(image_type, "1024x1024")
     if resolved_style == "images":
@@ -477,7 +475,7 @@ def parse_args() -> argparse.Namespace:
         "--api-style",
         choices=CODEX_API_STYLES,
         default="",
-        help="OpenAI-compatible protocol for --provider codex: responses (default) or images.",
+        help="OpenAI-compatible protocol for --provider codex: images (default) or responses.",
     )
     parser.add_argument("--size", default="", help="Explicit output size such as 1152x640.")
     parser.add_argument(

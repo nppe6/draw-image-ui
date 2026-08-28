@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="${DRAW_VENV:-$HOME/.cache/draw/venv}"
-PROVIDER="${DRAW_PROVIDER:-zenmux}"
+PROVIDER="${DRAW_PROVIDER:-codex}"
 RAW_ARGS=("$@")
 for ((i = 0; i < ${#RAW_ARGS[@]}; i++)); do
   case "${RAW_ARGS[$i]}" in

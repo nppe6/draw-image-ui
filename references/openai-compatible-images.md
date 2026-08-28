@@ -1,29 +1,28 @@
 # OpenAI-Compatible Image Providers
 
-Read this reference only when `--provider codex` is used. The provider's documented curl or HTTP example is the source of truth for protocol selection.
+Read this reference for the default image generation path. The contract in `.http/index.http` is the source of truth.
 
 ## Protocol Selection
 
 | Provider contract | CLI setting | Generation | Reference edit |
 | --- | --- | --- | --- |
-| Responses API with `image_generation` tool | `--api-style responses` | `POST /responses` | Input images embedded in the Responses content |
-| Images API | `--api-style images` | `POST /images/generations` JSON | `POST /images/edits` multipart |
+| Images API | Default, no flag required | `POST /images/generations` JSON | `POST /images/edits` multipart |
+| Responses API with `image_generation` tool | Explicit `--api-style responses` | `POST /responses` | Input images embedded in the Responses content |
 
-The default remains `responses` for backward compatibility. Select `images` explicitly with the CLI or set `OPENAI_IMAGE_API_STYLE=images` in `.env.local`.
+Do not select a protocol during ordinary use. The script defaults to the Images API contract. Use `--api-style responses` only when the user explicitly requests the legacy Responses path.
 
 ## Configuration
 
 ```dotenv
 OPENAI_IMAGE_API_KEY=...
 OPENAI_IMAGE_BASE_URL=https://provider.example/v1
-OPENAI_IMAGE_API_STYLE=images
 DRAW_CODEX_MODEL=gpt-image-2
 ```
 
 Optional:
 
 ```dotenv
-# Some providers use `image`; others document `image[]`.
+# Only needed for reference edits when the provider documents a different multipart field.
 OPENAI_IMAGE_FIELD=image[]
 ```
 
@@ -35,11 +34,7 @@ Text-to-image through Images API:
 
 ```powershell
 scripts\ask_draw.ps1 `
-  --provider codex `
-  --api-style images `
   --type wide `
-  --size 1152x640 `
-  --quality high `
   --output assets\generated\concept.png `
   --prompt "Design a full-screen AI workspace..."
 ```
@@ -48,18 +43,14 @@ Reference edit through Images API:
 
 ```powershell
 scripts\ask_draw.ps1 `
-  --provider codex `
-  --api-style images `
   --mode frame-lock `
   --frame assets\reference\frame.png `
   --type wide `
-  --size 1152x640 `
-  --quality high `
   --output assets\generated\concept.png `
   --prompt "Keep the application frame unchanged..."
 ```
 
-`--size` overrides the aspect-ratio preset sent to the provider. The provider may still return different pixel dimensions; validate the actual file.
+The default `wide` request sends `size=1152x640` and `quality=high`. `--size` and `--quality` explicitly override those values. The provider may still return different pixel dimensions; validate the actual file.
 
 ## Images API Contract
 

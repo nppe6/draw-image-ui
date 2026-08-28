@@ -37,11 +37,10 @@ Use `--mode frame-lock` for a clean frame, `--mode replicate` for full-screen fi
 
 ## 3. Generate the Mockup
 
-Prefer the runtime's built-in image generation tool when it is available. Otherwise use the bundled script when the user selected an external provider or a fixed local output is needed.
+Use the bundled script for image generation by default. It reads the provider URL, API key, and model from the nearest `.env.local` or the process environment and writes the decoded image to a local path. Use a runtime-provided image tool only when the user explicitly requests that tool.
 
 ```powershell
 scripts\ask_draw.ps1 `
-  --provider codex `
   --mode frame-lock `
   --frame C:\path\to\frame.png `
   --type wide `
@@ -50,14 +49,16 @@ scripts\ask_draw.ps1 `
   --prompt "..."
 ```
 
-The `codex` provider means an OpenAI-compatible HTTP provider, not Codex login credentials. It supports two explicit protocols:
+The default `codex` provider means an OpenAI-compatible HTTP provider, not Codex login credentials. Without provider or protocol flags, it uses:
 
-- `--api-style responses` (default): `/responses` with the `image_generation` tool.
-- `--api-style images`: `/images/generations` without references and multipart `/images/edits` with references.
+- `OPENAI_IMAGE_BASE_URL` + `/images/generations` for generation.
+- `OPENAI_IMAGE_API_KEY` as the bearer token.
+- `DRAW_CODEX_MODEL` as the model.
+- `size=1152x640` for the default `wide` type, `quality=high`, and `response_format=b64_json`.
 
-Do not assume an OpenAI-compatible provider supports the Responses image tool. Determine the protocol from the provider's documented request example or the user's confirmed contract. For Images API configuration and examples, read [references/openai-compatible-images.md](references/openai-compatible-images.md).
+With references, the same Images API mode uses multipart `/images/edits`. The legacy Responses path remains available only through explicit `--api-style responses`; ZenMux remains available only through explicit `--provider zenmux`. For configuration and request details, read [references/openai-compatible-images.md](references/openai-compatible-images.md).
 
-The script reads `ZENMUX_API_KEY`, `OPENAI_IMAGE_API_KEY`, `OPENAI_API_KEY`, `OPENAI_IMAGE_BASE_URL`, `OPENAI_IMAGE_API_STYLE`, and `DRAW_CODEX_MODEL` from the process environment or the nearest `.env.local`. Never print, copy, or embed keys in generated artifacts.
+The default path requires `OPENAI_IMAGE_API_KEY` and `OPENAI_IMAGE_BASE_URL`, and reads `DRAW_CODEX_MODEL`, from the process environment or nearest `.env.local`. Never print, copy, or embed keys in generated artifacts.
 
 ### Prompt Rules
 

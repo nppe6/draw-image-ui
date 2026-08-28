@@ -15,7 +15,7 @@
 | 页面目标、真实内容、现有截图和不能改动的区域 | 梳理需求、选择参考图策略、组织提示词并生成设计 | 一张或一组 UI 设计稿 |
 | 已确认的设计稿或产品截图 | 拆分代码与图片素材，构建页面并反复对照 | 可以运行的 HTML/CSS 页面或微信小程序页面 |
 
-默认优先使用 Agent 当前内置的图片生成能力。只有环境里没有内置工具、明确需要 ZenMux，或需要脚本固定本地输出路径时，才会使用仓库里的生成脚本。
+默认使用仓库里的生成脚本，从项目 `.env.local` 读取 `OPENAI_IMAGE_BASE_URL`、`OPENAI_IMAGE_API_KEY` 和 `DRAW_CODEX_MODEL`，按 Images API 请求生成并保存设计稿。只有用户明确指定时才改用 Agent 内置图片工具或 ZenMux。
 
 <p align="center">
   <img src="./assets/readme/readme-section-brief.svg" width="100%" alt="03 开始前，先把页面讲清楚">
@@ -116,7 +116,7 @@ npx skills add nppe6/draw-image-ui
 <details>
 <summary><strong>脚本调用与比例选项</strong></summary>
 
-没有内置图片工具，或者需要固定本地输出路径时，可以使用：
+默认通过生成脚本调用 Images API：
 
 ```bash
 # 不使用参考图
@@ -137,15 +137,13 @@ scripts/ask_draw.sh \
 | `square` | 1:1 | 卡片、弹窗和局部组件 |
 | `portrait` | 3:4 | 手机页面 |
 
-脚本使用 ZenMux。API Key 可以放在 `ZENMUX_API_KEY`、项目的 `.env.local`，或 `~/.config/see/api_key`。
+脚本默认请求 `${OPENAI_IMAGE_BASE_URL}/images/generations`，使用 `OPENAI_IMAGE_API_KEY` 鉴权和 `DRAW_CODEX_MODEL` 指定模型。默认 `wide` 请求为 `1152x640`、`quality=high`、`response_format=b64_json`。
 
-也可以显式使用 OpenAI-compatible provider。该路径不会读取 Codex 的本地登录凭据，需要设置 `OPENAI_IMAGE_API_KEY` 或 `OPENAI_API_KEY`。默认使用 Responses API；当服务商文档使用 `/images/generations` 与 `/images/edits` 时，增加 `--api-style images`。脚本会从当前目录向上读取 `.env.local`，详细配置见 `references/openai-compatible-images.md`：
+该路径不会读取 Codex 的本地登录凭据。脚本会从当前目录向上读取 `.env.local`，详细配置见 `references/openai-compatible-images.md`：
 
 ```powershell
 # Windows PowerShell：完整复刻参考界面
 scripts\ask_draw.ps1 `
-  --provider codex `
-  --api-style responses `
   --mode replicate `
   --frame C:\path\to\reference.png `
   --type wide `
@@ -156,8 +154,6 @@ scripts\ask_draw.ps1 `
 ```bash
 # macOS / Linux：保留应用外框，只生成内容区
 scripts/ask_draw.sh \
-  --provider codex \
-  --api-style responses \
   --mode frame-lock \
   --frame /path/to/sidebar-reference.png \
   --type wide \

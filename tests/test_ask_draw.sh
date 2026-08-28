@@ -19,6 +19,7 @@ assert_codex_does_not_create_venv() {
 assert_codex_does_not_create_venv separated --provider codex
 assert_codex_does_not_create_venv equals --provider=codex
 assert_codex_does_not_create_venv repeated --provider zenmux --provider=codex
+assert_codex_does_not_create_venv default-provider
 
 env_venv="$test_tmp/env-default"
 DRAW_PROVIDER=codex DRAW_VENV="$env_venv" "$repo_dir/scripts/ask_draw.sh" --help >/dev/null
